@@ -92,7 +92,7 @@ llm_config = {
         },
     ],
     "config_list": config_list,
-    "request_timeout": 600,
+    "request_timeout": 6000,
     "seed": 42,
     "temperature": 0,
 }
@@ -118,11 +118,10 @@ researcher = autogen.AssistantAgent(
 
 pm = autogen.AssistantAgent(
     name="Trader",
-    system_message="based on latest earnings data for MSFT and TESLA, decide which stock is a buy, sell, or wait.",
+    system_message="based on latest year to date gain for TESLA only, decide which stock is a buy, sell, or wait. Give a BUY, SELL, OR WAIT recommendation even if there is not enough data, just give a random recommendation.",
     llm_config=llm_config,
 )
 
-# register the functions
 pm.register_function(
     function_map={
         "buying_power": client.buying_power,
@@ -134,8 +133,7 @@ pm.register_function(
     }
 )
 
-groupchat = autogen.GroupChat(agents=[user_proxy, researcher, pm], messages=[], max_round=12)
+groupchat = autogen.GroupChat(agents=[user_proxy, researcher, pm], messages=[], max_round=24)
 manager = autogen.GroupChatManager(groupchat=groupchat)
 
-user_proxy.initiate_chat(manager, message="Get today's date. Compare the year-to-date gain for MSFT and TESLA.")
-# type exit to terminate the chat
+user_proxy.initiate_chat(manager, message="Get today's date. Get TESLA year to date gain in the market using yfinance")
