@@ -4,6 +4,8 @@ import autogen
 from dotenv import load_dotenv
 import requests
 import json
+import alpaca_trade_api as tradeapi
+from autogen import Agent
 
 # Load environment variables
 load_dotenv()
@@ -12,9 +14,12 @@ load_dotenv()
 API_TOKEN = os.getenv('MARKETAUX_API_TOKEN')
 
 # Constants
-NEWS_API_URL = f'https://api.marketaux.com/v1/news/all?symbols=MSFT&filter_entities=true&language=en&api_token={API_TOKEN}'
+NEWS_API_URL = f'https://api.marketaux.com/v1/news/all?symbols=AAPL&filter_entities=true&language=en&api_token={API_TOKEN}'
 
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+
+# Alpaca API
+api = tradeapi.REST('<ALPACA_API_KEY>', '<ALPACA_SECRET_KEY>', base_url='https://paper-api.alpaca.markets')
 
 def fetch_data_from_api(url):
     """Fetch data from API and return as JSON."""
@@ -42,17 +47,44 @@ def get_market_news():
         print("Unexpected API response data.")
         return None
 
+def buy_stock(symbol, qty):
+    api.submit_order(
+        symbol=symbol,
+        qty=qty,
+        side='buy',
+        type='market',
+        time_in_force='gtc'
+    )
+    print(f"Submitted order to buy {qty} shares of {symbol}")
+    return f"Submitted order to buy {qty} shares of {symbol}"
+
+def sell_stock(symbol, qty):
+    api.submit_order(
+        symbol=symbol,
+        qty=qty,
+        side='sell',
+        type='market',
+        time_in_force='gtc'
+    )
+    print(f"Submitted order to sell {qty} shares of {symbol}")
+    return f"Submitted order to sell {qty} shares of {symbol}"
+
 data = asyncio.Future()
 
 async def add_market_data():
-    for i in range(0, 2, 1):
-        latest_news = get_market_news()
-        if latest_news:
-            if data.done():
-                data.result().append(latest_news)
-            else:
-                data.set_result([latest_news])
-        await asyncio.sleep(5)
+    try:
+        for _ in range(4):  # Fetch market news 4 times
+            latest_news = get_market_news()
+            if latest_news:
+                if data.done():
+                    data.result().append(latest_news)
+                else:
+                    data.set_result([latest_news])
+            await asyncio.sleep(5)
+    except asyncio.CancelledError:
+        print("Task was cancelled, cleaning up...")
+        # Perform your cleanup here
+        raise  
 
 assistant = autogen.AssistantAgent(
     name="assistant",
@@ -62,7 +94,7 @@ assistant = autogen.AssistantAgent(
         "config_list": config_list,
         "temperature": 0,
     },
-    system_message="You are a day trading bot, trading MSFT",
+    system_message="You are a day trading bot, trading AAPL",
 )
 
 user_proxy = autogen.UserProxyAgent(
@@ -94,9 +126,9 @@ async def main():
     try:
         await user_proxy.a_initiate_chat(
             assistant,
-            message="""Give me investment suggestion for how to trade MSFT: BUY, SELL, or HOLD. Explain your logic""",
+            message="""Give me investment suggestion for how to trade AAPL: BUY, SELL. Don't explain your logic, just give me the suggestion.""",
         )
-        while not data_task.done() and not data_task.cancelled():
+        while not data_task.done():
             reply = await user_proxy.a_generate_reply(sender=assistant)
             if reply is not None:
                 print(f"{assistant.name} (to {user_proxy.name}):")
@@ -104,13 +136,18 @@ async def main():
                 print(reply)
                 print()
                 print("-" * 80)
+                
+                # Interpret the assistant's response and call the appropriate function
+                if "BUY" in reply:
+                    buy_stock("AAPL", 1)  # Buy 1 share of AAPL
+                elif "SELL" in reply:
+                    sell_stock("AAPL", 1)  # Sell 1 share of AAPL
             else:
                 break
     except asyncio.CancelledError:
         pass  # Ignore the CancelledError
     finally:
-        data_task.cancel()
         await data_task
-
+        
 if __name__ == "__main__":
     asyncio.run(main())
