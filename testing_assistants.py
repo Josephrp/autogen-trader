@@ -1,4 +1,20 @@
 import autogen
+from dotenv import load_dotenv
+from alpaca_client import AlpacaClient
+import os
+load_dotenv()
+
+client = AlpacaClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
+
+print(client.buying_power())
+print(client.gain_loss())
+# print(client.get_all_assets())
+print(client.get_all_positions())
+
+# print(client.create_buy_market_order("SPY", 1))
+# print(client.get_open_position("SPY"))
+print(client.get_all_positions())
+print(client.get_all_open_orders())
 
 config_list = autogen.config_list_from_dotenv(
     dotenv_file_path='.env',
@@ -10,6 +26,40 @@ config_list = autogen.config_list_from_dotenv(
     }
 )
 
+llm_config = {
+    "functions": [
+        {
+            "name": "python",
+            "description": "run cell in ipython and return the execution result.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cell": {
+                        "type": "string",
+                        "description": "Valid Python cell to execute.",
+                    }
+                },
+                "required": ["cell"],
+            },
+        },
+        {
+            "name": "sh",
+            "description": "run a shell script and return the execution result.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "script": {
+                        "type": "string",
+                        "description": "Valid shell script to execute.",
+                    }
+                },
+                "required": ["script"],
+            },
+        },
+    ],
+    "config_list": config_list,
+    "request_timeout": 120,
+}
 
 user_proxy = autogen.UserProxyAgent(
     name="User_proxy", 
