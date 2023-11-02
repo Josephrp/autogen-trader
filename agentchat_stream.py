@@ -5,20 +5,14 @@ from dotenv import load_dotenv
 import requests
 import json
 
-# Constants
-API_URL = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=AAPL&sort=LATEST&limit=5&apikey='
-
 # Load environment variables
 load_dotenv()
 
-# Load Alphavantage API key from environment variable
-alphavantage_api_key = os.getenv('ALPHAVANTAGE_API_KEY')
-if alphavantage_api_key is None:
-    alphavantage_api_key = input("Please enter your Alphavantage API key: ")
+# Get API token from environment variables
+API_TOKEN = os.getenv('MARKETAUX_API_TOKEN')
 
-# Ensure API key is not None
-if not alphavantage_api_key:
-    raise ValueError("API key is not set.")
+# Constants
+NEWS_API_URL = f'https://api.marketaux.com/v1/news/all?symbols=MSFT&filter_entities=true&language=en&api_token={API_TOKEN}'
 
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 
@@ -32,14 +26,14 @@ def fetch_data_from_api(url):
         print(f"Failed to fetch data from API: {e}")
         return None
 
-def get_market_news(ind, ind_upper):
+def get_market_news():
     """Fetch market news and return a summary."""
-    data = fetch_data_from_api(API_URL + alphavantage_api_key)
-    if data and "feed" in data:
-        feeds = data["feed"][ind:ind_upper]
+    data = fetch_data_from_api(NEWS_API_URL)
+    if data and "data" in data:
+        feeds = data["data"]
         feeds_summary = "\n".join(
             [
-                f"News summary: {f.get('title')}. {f.get('summary')} overall_sentiment_score: {f.get('overall_sentiment_score')}"
+                f"News summary: {f.get('title')}. {f.get('description')}"
                 for f in feeds
             ]
         )
@@ -50,9 +44,9 @@ def get_market_news(ind, ind_upper):
 
 data = asyncio.Future()
 
-async def add_stock_price_data():
-    for i in range(0, 5, 1):
-        latest_news = get_market_news(i, i + 1)
+async def add_market_data():
+    for i in range(0, 2, 1):
+        latest_news = get_market_news()
         if latest_news:
             if data.done():
                 data.result().append(latest_news)
@@ -68,7 +62,7 @@ assistant = autogen.AssistantAgent(
         "config_list": config_list,
         "temperature": 0,
     },
-    system_message="You are a financial expert.",
+    system_message="You are a day trading bot, trading MSFT",
 )
 
 user_proxy = autogen.UserProxyAgent(
@@ -91,20 +85,32 @@ async def add_data_reply(recipient, messages, sender, config):
                 True,
                 f"Just got some latest market news. Merge your new suggestion with previous ones.\n{news_str}",
             )
-        return False, None
+    return False, None
 
 user_proxy.register_reply(autogen.AssistantAgent, add_data_reply, 1, config={"news_stream": data})
 
 async def main():
-    data_task = asyncio.create_task(add_stock_price_data())
-    await user_proxy.a_initiate_chat(
-        assistant,
-        message="""Give me investment suggestion in 3 bullet points.""",
-    )
-    while not data_task.done() and not data_task.cancelled():
-        reply = await user_proxy.a_generate_reply(sender=assistant)
-        if reply is not None:
-            await user_proxy.a_send(reply, assistant)
+    data_task = asyncio.create_task(add_market_data())
+    try:
+        await user_proxy.a_initiate_chat(
+            assistant,
+            message="""Give me investment suggestion for how to trade MSFT: BUY, SELL, or HOLD. Explain your logic""",
+        )
+        while not data_task.done() and not data_task.cancelled():
+            reply = await user_proxy.a_generate_reply(sender=assistant)
+            if reply is not None:
+                print(f"{assistant.name} (to {user_proxy.name}):")
+                print()
+                print(reply)
+                print()
+                print("-" * 80)
+            else:
+                break
+    except asyncio.CancelledError:
+        pass  # Ignore the CancelledError
+    finally:
+        data_task.cancel()
+        await data_task
 
 if __name__ == "__main__":
     asyncio.run(main())
