@@ -6,16 +6,6 @@ load_dotenv()
 
 client = AlpacaClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
 
-print(client.buying_power())
-print(client.gain_loss())
-# print(client.get_all_assets())
-print(client.get_all_positions())
-
-# print(client.create_buy_market_order("SPY", 1))
-# print(client.get_open_position("SPY"))
-print(client.get_all_positions())
-print(client.get_all_open_orders())
-
 config_list = autogen.config_list_from_dotenv(
     dotenv_file_path='.env',
     filter_dict={
@@ -29,36 +19,82 @@ config_list = autogen.config_list_from_dotenv(
 llm_config = {
     "functions": [
         {
-            "name": "python",
-            "description": "run cell in ipython and return the execution result.",
+            "name": "buying_power",
+            "description": "Run this function to determine the available powering power of the portfolio",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            }
+        },
+        {
+            "name": "current_positions",
+            "description": "Run this function to get the positions in the portfolio",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            }
+        },
+        {
+            "name": "create_buy_order",
+            "description": "Run this function to execute a buy order at market price",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "cell": {
+                    "ticker": {
                         "type": "string",
-                        "description": "Valid Python cell to execute.",
-                    }
+                        "description": "ticker symbol of the security to order. must be in all caps",
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "description": "Quantity amount to the security to purchase",
+                    },
                 },
-                "required": ["cell"],
+                "required": ["ticker", "quantity"],
             },
         },
         {
-            "name": "sh",
-            "description": "run a shell script and return the execution result.",
+            "name": "create_sell_order",
+            "description": "Run this function to execute a sell order at market price",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "script": {
+                    "ticker": {
                         "type": "string",
-                        "description": "Valid shell script to execute.",
-                    }
+                        "description": "ticker symbol of the security. Must be in all caps",
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "description": "Quantity amount to the security to sell",
+                    },
                 },
-                "required": ["script"],
+                "required": ["ticker", "quantity"],
             },
+        },
+        {
+            "name": "get_open_orders",
+            "description": "Run this function to retrieve all pending open orders",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            }
+        },
+        {
+            "name": "gain_loss_status",
+            "description": "Run this function the current gain or loss of the portfolio",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            }
         },
     ],
     "config_list": config_list,
-    "request_timeout": 120,
+    "request_timeout": 600,
+    "seed": 42,
+    "temperature": 0,
 }
 
 user_proxy = autogen.UserProxyAgent(
@@ -77,24 +113,26 @@ user_proxy = autogen.UserProxyAgent(
 
 researcher = autogen.AssistantAgent(
     name="researcher",
-    llm_config={
-        "request_timeout": 600,
-        "seed": 42,
-        "config_list": config_list,
-        "temperature": 0,
-    },
+    llm_config=llm_config,
 )
+
 pm = autogen.AssistantAgent(
     name="Trader",
     system_message="based on latest earnings data for MSFT and TESLA, decide which stock is a buy, sell, or wait.",
-        llm_config={
-        "request_timeout": 600,
-        "seed": 42,
-        "config_list": config_list,
-        "temperature": 0,
-    },
+    llm_config=llm_config,
 )
 
+# register the functions
+pm.register_function(
+    function_map={
+        "buying_power": client.buying_power,
+        "current_positions": client.get_all_positions,
+        "create_buy_order": client.create_buy_market_order,
+        "create_sell_order": client.get_open_position,
+        "get_open_orders": client.get_all_open_orders,
+        "gain_loss_status": client.gain_loss
+    }
+)
 
 groupchat = autogen.GroupChat(agents=[user_proxy, researcher, pm], messages=[], max_round=12)
 manager = autogen.GroupChatManager(groupchat=groupchat)
