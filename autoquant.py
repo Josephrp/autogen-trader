@@ -148,8 +148,8 @@ news_agent = autogen.AssistantAgent(
 )
 
 portfolio_Manager_system_message = """
-Your job is the manage the stock portoflio through Alpaca API functions based on latest financial news from News_Agent 
-and the recommendations from the Financial_Analyst.
+Your job is the manage the stock portoflio based on latest financial news from News_Agent and the recommendations from 
+the Financial_Analyst.
 Always understand buying power and current positions of the portfolio before performing trades actions on a stocks based 
 on the recommendations. 
 If you're sending a JSON payload that includes a calculation, perform the calculation in advance and only send the result.
@@ -184,7 +184,7 @@ async def main():
     manager = autogen.GroupChatManager(groupchat=groupchat)
 
     # Initiate the chat
-    await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades.")
+    await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades it today")
 
 # Run the main function
 asyncio.run(main())
