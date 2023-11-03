@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
-from alpaca_client import AlpacaClient
+from alpaca_tool import AlpacaTool
 import os
 load_dotenv()
 
-client = AlpacaClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
+client = AlpacaTool(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
 
 print(client.buying_power())
 print(client.gain_loss())

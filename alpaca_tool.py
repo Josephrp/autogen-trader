@@ -2,7 +2,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetAssetsRequest, MarketOrderRequest, GetOrdersRequest
 from alpaca.trading.enums import AssetClass, OrderSide, TimeInForce, QueryOrderStatus
 
-class AlpacaClient:
+class AlpacaTool:
     def __init__(self, api_key, secret_key):
         self.trading_client = TradingClient(api_key, secret_key)
 

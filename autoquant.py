@@ -1,11 +1,11 @@
 import autogen
 import asyncio
 from dotenv import load_dotenv
-from alpaca_client import AlpacaClient
+from alpaca_tool import AlpacaTool
 import os
 load_dotenv()
 
-client = AlpacaClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
+alpaca = AlpacaTool(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_API_SECRET'))
 
 config_list = autogen.config_list_from_dotenv(
     dotenv_file_path='.env',
@@ -130,12 +130,12 @@ pm = autogen.AssistantAgent(
 
 pm.register_function(
     function_map={
-        "buying_power": client.buying_power,
-        "current_positions": client.get_all_positions,
-        "create_buy_order": client.create_buy_market_order,
-        "create_sell_order": client.get_open_position,
-        "get_open_orders": client.get_all_open_orders,
-        "gain_loss_status": client.gain_loss
+        "buying_power": alpaca.buying_power,
+        "current_positions": alpaca.get_all_positions,
+        "create_buy_order": alpaca.create_buy_market_order,
+        "create_sell_order": alpaca.get_open_position,
+        "get_open_orders": alpaca.get_all_open_orders,
+        "gain_loss_status": alpaca.gain_loss
     }
 )
 
