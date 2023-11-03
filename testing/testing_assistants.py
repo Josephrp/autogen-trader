@@ -118,7 +118,7 @@ researcher = autogen.AssistantAgent(
 
 pm = autogen.AssistantAgent(
     name="Trader",
-    system_message="based on latest year to date gain for TESLA only, decide which stock is a buy, sell, or wait. Give a BUY, SELL, OR WAIT recommendation even if there is not enough data, just give a random recommendation.",
+    system_message="Create create_buy_order for 10 shares of TESLA using the alpaca function.",
     llm_config=llm_config,
 )
 
@@ -136,4 +136,4 @@ pm.register_function(
 groupchat = autogen.GroupChat(agents=[user_proxy, researcher, pm], messages=[], max_round=24)
 manager = autogen.GroupChatManager(groupchat=groupchat)
 
-user_proxy.initiate_chat(manager, message="Get today's date. Get TESLA year to date gain in the market using yfinance")
+user_proxy.initiate_chat(manager, message="Ask to buy 10 shares of TESLA using the alpaca function.")

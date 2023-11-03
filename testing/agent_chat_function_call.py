@@ -5,15 +5,15 @@ config_list = autogen.config_list_from_models(model_list=["gpt-4", "gpt-3.5-turb
 config_list = [
     {
         'model': 'gpt-4',
-        'api_key': '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',
+        'api_key': '',
     },  # OpenAI API endpoint for gpt-4
     {
         'model': 'gpt-3.5-turbo',
-        'api_key': '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',
+        'api_key': '',
     },  # OpenAI API endpoint for gpt-3.5-turbo
     {
         'model': 'gpt-3.5-turbo-16k',
-        'api_key': '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',
+        'api_key': '',
     },  # OpenAI API endpoint for gpt-3.5-turbo-16k
 ]
 
