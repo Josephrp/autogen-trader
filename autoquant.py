@@ -178,13 +178,13 @@ pm.register_function(
 )
 
 async def main():
-
     # Setup the group chat and manager
     groupchat = autogen.GroupChat(agents=[user_proxy, news_agent, analyst, pm], messages=[], max_round=46)
     manager = autogen.GroupChatManager(groupchat=groupchat)
 
     # Initiate the chat
-    await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades it today")
+    # await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades it today")
+    await user_proxy.a_initiate_chat(manager, message="Determine how to proceed with the current holdings in the portfolio")
 
 # Run the main function
 asyncio.run(main())
