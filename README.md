@@ -21,7 +21,7 @@ conda activate autoquant-env
      - ALPACA_API_KEY
      - ALPACA_API_SECRET
    - https://www.openai.com
-     - 
+     - OPENAI_API_KEY
 
 ## run autoquant
 1. open autoquant.py.
