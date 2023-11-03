@@ -2,7 +2,8 @@
 AutoQuant is an AI-agent driven hedge fund that executes swift trades using the latest financial news for maximum investment yield.
 
 ## requirements
-miniconda: https://docs.conda.io/projects/miniconda/en/latest/
+1. install miniconda
+   https://docs.conda.io/projects/miniconda/en/latest/
 
 ## environment setup
 1. setup environment
