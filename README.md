@@ -14,7 +14,7 @@ conda env create --name autoquant-env --file=environments.yml
 ```sh
 conda activate autoquant-env
 ```
-3. make a copy on .env.example and rename it to env
+3. make a copy on .env.example and rename it to .env
 4. get the following api keys and fill out the .env file
    - https://www.marketaux.com/
      - MARKETAUX_API_TOKEN 
