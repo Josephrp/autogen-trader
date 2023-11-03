@@ -20,21 +20,10 @@ class MarketauxTool:
             raise Exception('MARKETAUX_API_TOKEN is not a defined environment variable')
         self.token = token
 
-    def _fetch_data(self, url, params = {}):
-        """Fetch data from API and return as JSON."""
-        try:
-            print(url)
-            print(params)
-            response = requests.get(url, params=params)
-            response.raise_for_status()  # Raise exception if invalid response
-            return response.json()
-        except (requests.RequestException, json.JSONDecodeError) as e:
-            raise e
-
-    def get_market_news(self, tickers: [str] = []):
+    def get_market_news(self, tickers: str):
         """Fetch market news and return a summary."""
         params = {
-            "symbols": ",".join(tickers),
+            "symbols": tickers,
             "filter_entities": True,
             "language": "en",
             "api_token": self.token
@@ -42,12 +31,21 @@ class MarketauxTool:
         data = self._fetch_data("https://api.marketaux.com/v1/news/all", params)
         
         if data and "data" in data:
-            return self.data_parser(data["data"])
+            return self._data_parser(data["data"], tickers)
         else:
             print("Unexpected API response data.")
             return None
         
-    def data_parser(self, feed):
+    def _fetch_data(self, url, params = {}):
+        """Fetch data from API and return as JSON."""
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()  # Raise exception if invalid response
+            return response.json()
+        except (requests.RequestException, json.JSONDecodeError) as e:
+            raise e
+        
+    def _data_parser(self, feed, tickers):
         feed_summary = []
         for f in feed:
             article = {
@@ -57,10 +55,13 @@ class MarketauxTool:
 
             entites = []
             for e in f.get('entities'):
-                entites.append({
-                    "symbol": e.get('symbol'),
-                    "highlights": [h.get('highlight') for h in e.get('highlights')]
-                })
+                symbol = e.get('symbol')
+
+                if symbol in tickers:
+                    entites.append({
+                        "symbol": symbol,
+                        "highlights": [h.get('highlight') for h in e.get('highlights')]
+                    })
 
             article["entities"] = entites
             feed_summary.append(article)
