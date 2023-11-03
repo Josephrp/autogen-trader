@@ -116,7 +116,7 @@ llm_config = {
 
 user_proxy = autogen.UserProxyAgent(
     name="User_proxy",
-    human_input_mode="NEVER",
+    human_input_mode="ALWAYS",
     max_consecutive_auto_reply=5,
     is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
     code_execution_config={
@@ -183,8 +183,8 @@ async def main():
     manager = autogen.GroupChatManager(groupchat=groupchat)
 
     # Initiate the chat
-    # await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades it today")
-    await user_proxy.a_initiate_chat(manager, message="Determine how to proceed with the current holdings in the portfolio")
+    await user_proxy.a_initiate_chat(manager, message="Do research on MSFT, AAPL and AMZN to determine how to action on the trades it today")
+    # await user_proxy.a_initiate_chat(manager, message="Determine how to proceed with the current holdings in the portfolio")
 
 # Run the main function
 asyncio.run(main())
